@@ -1,8 +1,9 @@
+from ctypes import sizeof
 import math
 from typing import Union, Tuple
 
 from kivy.clock import Clock
-from kivy.graphics import Color, Line
+from kivy.graphics import Color, Line, Rectangle
 from kivy.properties import NumericProperty
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
@@ -21,30 +22,45 @@ number_file_sources = [
     '2052057.svg.png'
 ]
 
+##############################################################################################
+#                               Sudoku Data Class
+#############################################################################################
+
 
 class SudokuData:
+    """
+    info contained in sudoku each index of the sudoku:
+        value: int -> number stored in sudoku
+        valid: bool ->  whether or not the number is valid based on the rules of sudoku 
+        mutable: bool -> whether or not the value can be changed. Should be false for 
+            intial values and only true for user set values
+    """
+
     def __init__(self, sudoku_size: int, preset_values=None):
-        # FIXME: change this to actually load values and not use this testing default
-        self.__sudoku_data: list = [3, None, 1, None,
-                                    None, None, 4, None,
-                                    1, None, 2, None, None,
-                                    None, 3, None, 4]
         self.size: int = sudoku_size
+        self.__sudoku_data = self._init_random()
 
-    def __getitem__(self, key: Union[int, Tuple[int, int]]):
-        if type(key) == int:
-            return self.__sudoku_data[key]
-        elif type(key) == tuple:
-            return self.__sudoku_data[key[0] * self.size + key[1]]
+    def _init_random(self):
+        """Method that initializes sudoku data with random information"""
+        from random import randint
+        return [
+            {
+                'value': randint(1, self.size) if randint(-4, 1) > 0 else None,
+                'valid': True,
+                'mutable': False
+            } for _ in range(self.size ** 2)
+        ]
 
-    def __setitem__(self, key: Union[int, Tuple[int, int]], value: int):
+    def __getitem__(self, key:  Tuple[int, int]):
+        return self.__sudoku_data[key[0] * self.size + key[1]]
+
+    def __setitem__(self, key:  Tuple[int, int], value: int):
         # TODO: Be able to mark certain positions as immutable by being unable to set the value
         # TODO: Additionally add other checks to make sure values are valid i.e. cannot set
         #   box to 5 in a 4x4 sudoku
-        if type(key) == int:
-            self.__sudoku_data[key] = value
-        elif type(key) == tuple:
-            self.__sudoku_data[key[0] * self.size + key[1]] = value
+        self.__sudoku_data[key[0] * self.size + key[1]] = value
+
+    # def _check_move_legalit(self, )
 
 
 class SudokuBoard(FloatLayout):
@@ -68,7 +84,7 @@ class SudokuBoard(FloatLayout):
 
     def render(self, *args, **kwargs):
         self._render_background()
-        self._render_images()
+        self._render_numbers()
 
     def _render_background(self):
         v_len = self.height / self.sudoku_size
@@ -119,21 +135,48 @@ class SudokuBoard(FloatLayout):
                     width=self._larger_cell_line_thickness
                 )
 
-    def _render_images(self, **kwargs):
+    def _render_numbers(self, **kwargs):
+        """Renders numbers as individual image widgets"""
         self.clear_widgets()
         for i in range(self.sudoku_size):
             for j in range(self.sudoku_size):
-                if self._sudoku_data[i, j] is not None:
-                    image = Image(
-                        source=f'res/images/{number_file_sources[self._sudoku_data[i, j]]}',
-                        size_hint=(0.7 / self.sudoku_size, 0.7 / self.sudoku_size),
-                        pos_hint={'center': (
-                            1 / (self.sudoku_size * 2) + i * 1 / self.sudoku_size,
-                            1 / (self.sudoku_size * 2) + j * 1 / self.sudoku_size
-                        )}
-                    )
-                    self.add_widget(image)
+                if self._sudoku_data[i, j]['value'] is None:
+                    continue
 
+                # Darker background indicating this value cannot be changed
+                if not self._sudoku_data[i, j]['mutable']:
+                    with self.canvas.before: 
+                        Color(0.5, 0.5, 0.5, 1.0)
+                        Rectangle(
+                            pos=(
+                                self.pos[0] + i * self.size[0] / self.sudoku_size ,
+                                self.pos[1] + j * self.size[1] / self.sudoku_size
+                            ),
+                            size=(
+                                self.size[0] / self.sudoku_size,
+                                self.size[1] / self.sudoku_size
+                            )
+                        )
+                    
+
+
+                # magic number definitions:
+                # The reciprocal of the sudoku size is provided because kivy operates on a system
+                # of size hints and the number of widgets to be placed is equal to the size of the sudoku
+                #  0.7 is used instead for the size hint so that the image widget is slightly smaller
+                # than its box effectively serving as a padding
+                image = Image(
+                    source=f'res/images/{number_file_sources[self._sudoku_data[i, j]["value"]]}',
+                    size_hint=(0.7 / self.sudoku_size,
+                               0.7 / self.sudoku_size),
+                    pos_hint={'center': (
+                        1 / (self.sudoku_size * 2) + i * 1 / self.sudoku_size,
+                        1 / (self.sudoku_size * 2) + j * 1 / self.sudoku_size
+                    )},
+                )
+                self.add_widget(image)
+           
+ 
 
 class SudokuApp(MDApp):
     pass
