@@ -1,2 +1,4 @@
 venv/*
 .buildozer/*
+__pycache__/*
+
