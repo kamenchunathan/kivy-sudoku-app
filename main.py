@@ -9,18 +9,6 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivymd.app import MDApp
 
-number_file_sources = [
-    '2052194.svg.png',
-    '2052171.svg.png',
-    '2052150.svg.png',
-    '2052130.svg.png',
-    '2015076.svg.png',
-    '2052086.svg.png',
-    '2052071.svg.png',
-    '2052065.svg.png',
-    '2052062.svg.png',
-    '2052057.svg.png'
-]
 
 ##############################################################################################
 #                               Sudoku Data Class
@@ -63,9 +51,13 @@ class SudokuData:
     # def _check_move_legalit(self, )
 
 
+
+###############################################################################################
+#                                   Sudoku Renderer
+###############################################################################################
 class SudokuBoard(FloatLayout):
     """
-    Responsible for drawing the sudoku board
+    Responsible for rendering the board to the screen and receiving input
     """
 
     sudoku_size = NumericProperty(4)
@@ -77,6 +69,20 @@ class SudokuBoard(FloatLayout):
         self._regular_line_thickness = 1
         self._dividing_line_color = (0, 0, 0, 1)
         self._larger_cell_line_thickness = 2
+
+        # images
+        self._number_file_sources = [
+            '2052194.svg.png',
+            '2052171.svg.png',
+            '2052150.svg.png',
+            '2052130.svg.png',
+            '2015076.svg.png',
+            '2052086.svg.png',
+            '2052071.svg.png',
+            '2052065.svg.png',
+            '2052062.svg.png',
+            '2052057.svg.png'
+        ]
 
         self._sudoku_data = SudokuData(4)
 
@@ -101,6 +107,7 @@ class SudokuBoard(FloatLayout):
                 points=(
                     self.x, self.y,
                     self.right, self.y,
+
                     self.right, self.top,
                     self.x, self.top,
                     self.x, self.y,
@@ -136,29 +143,34 @@ class SudokuBoard(FloatLayout):
                 )
 
     def _render_numbers(self, **kwargs):
-        """Renders numbers as individual image widgets"""
+        """Renders numbers as individual image widgets and the number background"""
         self.clear_widgets()
+        self.canvas.before.clear()
         for i in range(self.sudoku_size):
             for j in range(self.sudoku_size):
                 if self._sudoku_data[i, j]['value'] is None:
                     continue
 
                 # Darker background indicating this value cannot be changed
+                # set using canvas.before so as not to intefere with the dividing lines
+                # NOTE: another option would be changing the draw order such that the lines are
+                # drawn after the images
+                # TODO: explore this option
                 if not self._sudoku_data[i, j]['mutable']:
-                    with self.canvas.before: 
+                    with self.canvas.before:
                         Color(0.5, 0.5, 0.5, 1.0)
                         Rectangle(
                             pos=(
-                                self.pos[0] + i * self.size[0] / self.sudoku_size ,
-                                self.pos[1] + j * self.size[1] / self.sudoku_size
+                                self.pos[0] + i * self.size[0] /
+                                self.sudoku_size,
+                                self.pos[1] + j * self.size[1] /
+                                self.sudoku_size
                             ),
                             size=(
                                 self.size[0] / self.sudoku_size,
                                 self.size[1] / self.sudoku_size
                             )
                         )
-                    
-
 
                 # magic number definitions:
                 # The reciprocal of the sudoku size is provided because kivy operates on a system
@@ -166,7 +178,7 @@ class SudokuBoard(FloatLayout):
                 #  0.7 is used instead for the size hint so that the image widget is slightly smaller
                 # than its box effectively serving as a padding
                 image = Image(
-                    source=f'res/images/{number_file_sources[self._sudoku_data[i, j]["value"]]}',
+                    source=f'res/images/{self._number_file_sources[self._sudoku_data[i, j]["value"]]}',
                     size_hint=(0.7 / self.sudoku_size,
                                0.7 / self.sudoku_size),
                     pos_hint={'center': (
@@ -175,8 +187,7 @@ class SudokuBoard(FloatLayout):
                     )},
                 )
                 self.add_widget(image)
-           
- 
+
 
 class SudokuApp(MDApp):
     pass
