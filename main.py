@@ -1,6 +1,5 @@
-from ctypes import sizeof
 import math
-from typing import Union, Tuple
+from typing import Tuple
 
 from kivy.clock import Clock
 from kivy.graphics import Color, Line, Rectangle
@@ -10,18 +9,21 @@ from kivy.uix.image import Image
 from kivymd.app import MDApp
 
 
-##############################################################################################
+##############################################################################
 #                               Sudoku Data Class
-#############################################################################################
+##############################################################################
 
 
 class SudokuData:
     """
     info contained in sudoku each index of the sudoku:
         value: int -> number stored in sudoku
-        valid: bool ->  whether or not the number is valid based on the rules of sudoku 
-        mutable: bool -> whether or not the value can be changed. Should be false for 
-            intial values and only true for user set values
+        valid: bool ->  whether or not the number is valid based on the rules
+        of sudoku 
+        mutable: bool -> whether or not the value can be changed. Should be 
+        false for intial values and only true for user set values
+        clashing values : list[list] -> a list of all the indices that this
+        value clashes with in the case that it is not valid
     """
 
     def __init__(self, sudoku_size: int, preset_values=None):
@@ -33,28 +35,50 @@ class SudokuData:
         from random import randint
         return [
             {
-                'value': randint(1, self.size) if randint(-4, 1) > 0 else None,
+                'value': randint(1, self.size) if randint(0, 1) > 0 else None,
                 'valid': True,
-                'mutable': False
+                'mutable': False,
+                'clashing_values': []
             } for _ in range(self.size ** 2)
         ]
 
     def __getitem__(self, key:  Tuple[int, int]):
         return self.__sudoku_data[key[0] * self.size + key[1]]
 
-    def __setitem__(self, key:  Tuple[int, int], value: int):
+    def set_value(self, key: Tuple[int, int], value: int):
         # TODO: Be able to mark certain positions as immutable by being unable to set the value
-        # TODO: Additionally add other checks to make sure values are valid i.e. cannot set
+        # TODO: Additionally add other checks to make sure values are valid  i.e. cannot set
         #   box to 5 in a 4x4 sudoku
-        self.__sudoku_data[key[0] * self.size + key[1]] = value
+        self._check_move_legality(key, value)
 
-    # def _check_move_legalit(self, )
+    def _check_move_legality(self, key: Tuple[int, int], value: int) -> bool:
+        self[key[0], key[1]]['clashing_values'].clear()
+
+        for i in range(self.size):
+            # check numbers in same row
+            if key[1] != i and self[key[0], i]['value'] == value:
+                self[key[0], key[1]]['valid'] = False
+                self[key[0], key[1]]['clashing_values'].append((key[0], i))
+
+            # check numbers in same column
+            if key[0] != i and self[i, key[1]]['value'] == value:
+                self[key[0], key[1]]['valid'] = False
+                self[key[0], key[1]]['clashing_values'].append((i, key[1]))
+
+        # check numbers in same box
+        size_root = int(math.sqrt(self.size))
+        large_box_index = key[0] // size_root, key[1] // size_root
+        for i in range(large_box_index[0] * size_root, (large_box_index[0] + 1) * size_root):
+            for j in range(large_box_index[1] * size_root, (large_box_index[1] + 1) * size_root):
+                if (i, j) != key and self[i, j]['value'] == value:
+                    self[key[0], key[1]]['valid'] = False
+                    self[key[0], key[1]]['clashing_values'].append((i, j))
 
 
 
-###############################################################################################
+##############################################################################
 #                                   Sudoku Renderer
-###############################################################################################
+##############################################################################
 class SudokuBoard(FloatLayout):
     """
     Responsible for rendering the board to the screen and receiving input
@@ -187,6 +211,10 @@ class SudokuBoard(FloatLayout):
                     )},
                 )
                 self.add_widget(image)
+
+    def on_touch_up(self, touch):
+        self._sudoku_data[1, 3]['value'] = 6
+        return super().on_touch_down(touch)
 
 
 class SudokuApp(MDApp):
