@@ -1,4 +1,5 @@
 import math
+from functools import partial
 from typing import Tuple
 
 from kivy import Logger
@@ -40,7 +41,7 @@ class SudokuData:
         valid: bool ->  whether or not the number is valid based on the rules
         of sudoku 
         mutable: bool -> whether or not the value can be changed. Should be 
-        false for intial values and only true for user set values
+        false for initial values and only true for user set values
         clashing values : list[list] -> a list of all the indices that this
         value clashes with in the case that it is not valid
     """
@@ -64,6 +65,9 @@ class SudokuData:
     def __getitem__(self, key: Tuple[int, int]):
         return self.__sudoku_data[key[0] * self.size + key[1]]
 
+    def __setitem__(self, key: Tuple[int, int], val: int):
+        self.__sudoku_data[key[0] * self.size + key[1]]['value'] = val
+
     def set_value(self, key: Tuple[int, int], value: int):
         # TODO: Be able to mark certain positions as immutable by being unable to set the value
         # TODO: Additionally add other checks to make sure values are valid  i.e. cannot set
@@ -72,7 +76,11 @@ class SudokuData:
         self[key[0], key[1]]['value'] = value
 
     def _check_move_legality(self, key: Tuple[int, int], value: int):
-        self[key[0], key[1]]['clashing_values'].clear()
+        # TODO: Reset all the values
+        self[key[0], key[1]]['mutable'] = True
+
+        if self[key[0], key[1]]['clashing_values']:
+            self[key[0], key[1]]['clashing_values'].clear()
 
         for i in range(self.size):
             # check numbers in same row
@@ -99,7 +107,6 @@ class SudokuData:
 #                                   Sudoku Renderer
 ##############################################################################
 class NumberSelector(BoxLayout):
-
     # to be passed during creation
     sudoku_size = NumericProperty()
 
@@ -109,11 +116,22 @@ class NumberSelector(BoxLayout):
         Clock.schedule_once(self._post_init)
 
     def _post_init(self, *args):
-        """Addtion of widgets done in method scheduled after init to allow for loading of variables"""
-        for i in range(self.sudoku_size):
+        """Addition of widgets done in method scheduled after init to allow for loading of variables"""
+        for i in range(1, self.sudoku_size + 1):
             self.add_widget(Image(
                 source=f'res/images/{NUMBER_FILE_SOURCES[i]}',
             ))
+
+    def on_touch_down(self, touch):
+        """"""
+        if self.collide_point(*touch.pos):
+            Clock.schedule_once(
+                partial(
+                    self.sudoku_board.set_cell_value,
+                    math.floor((touch.x - self.x) * self.sudoku_size / self.size[0]) + 1
+                ),
+                -1
+            )
 
 
 class SudokuBoard(FloatLayout):
@@ -131,20 +149,23 @@ class SudokuBoard(FloatLayout):
         self._dividing_line_color = (0, 0, 0, 1)
         self._larger_cell_line_thickness = 2
 
+        # solely for keeping track of the cell that is currently selected so as to set
+        # it once the number selector is pressed
+        self._highlighted_cell = None
+
         self._sudoku_data = SudokuData(self.sudoku_size)
 
-        Clock.schedule_interval(self.render, 1)
+        Clock.schedule_interval(self.render, 1 / 15)
 
     def render(self, *args, **kwargs):
-        self._render_background()
+        self.canvas.clear()
         self._render_numbers()
+        self._render_overlays()
 
-    def _render_background(self):
+    def _render_overlays(self):
         v_len = self.height / self.sudoku_size
         h_len = self.width / self.sudoku_size
         cell_no = int(math.sqrt(self.sudoku_size))
-
-        self.canvas.clear()
 
         with self.canvas:
             # Bounding box
@@ -192,7 +213,6 @@ class SudokuBoard(FloatLayout):
     def _render_numbers(self, **kwargs):
         """Renders numbers as individual image widgets and the number background"""
         self.clear_widgets()
-        self.canvas.before.clear()
         for i in range(self.sudoku_size):
             for j in range(self.sudoku_size):
                 if self._sudoku_data[i, j]['value'] is None:
@@ -204,7 +224,7 @@ class SudokuBoard(FloatLayout):
                 # drawn after the images
                 # TODO: explore this option
                 if not self._sudoku_data[i, j]['mutable']:
-                    with self.canvas.before:
+                    with self.canvas:
                         Color(0.5, 0.5, 0.5, 1.0)
                         Rectangle(
                             pos=(
@@ -222,7 +242,7 @@ class SudokuBoard(FloatLayout):
                 # FIXME: This is a temporary solution
                 if not self._sudoku_data[i, j]['valid']:
                     with self.canvas.before:
-                        Color(0.5, 0.5, 0.5, 1.0)
+                        Color(1.0, 0.5, 0.5, 1.0)
                         Rectangle(
                             pos=(
                                 self.pos[0] + i * self.size[0] /
@@ -252,14 +272,20 @@ class SudokuBoard(FloatLayout):
                 )
                 self.add_widget(image)
 
+    # --------------------------------------- UI actions ----------------------------------------------
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
-            touch_pos_hint = (touch.x - self.x) / \
-                self.size[0], (touch.y - self.y) / self.size[1]
-            cell_coord = [math.floor(x * self.sudoku_size)
-                          for x in touch_pos_hint]
-            Logger.info(
-                f"Sudoku widget: Coordinates of cell pressed: {cell_coord}")
+            touch_pos_hint = (touch.x - self.x) / self.size[0], (touch.y - self.y) / self.size[1]
+            cell_coord = tuple(math.floor(x * self.sudoku_size) for x in touch_pos_hint)
+            Logger.info(f"Sudoku widget: Coordinates of cell pressed: {cell_coord}")
+            self._set_selected_cell(cell_coord)
+
+    def _set_selected_cell(self, key: Tuple[int, ...]):
+        """ Reset once a key is set """
+        self._highlighted_cell = key
+
+    def set_cell_value(self, selected_value: int, dt: float):
+        self._sudoku_data.set_value(self._highlighted_cell, selected_value)
 
 
 class MyLayout(FloatLayout):
