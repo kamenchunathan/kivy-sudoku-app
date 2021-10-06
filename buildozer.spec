@@ -13,7 +13,7 @@ package.domain = com.sandboxedideas
 source.dir = src
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas
+source.include_exts = py,png,jpg,kv,atlas,txt
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -36,7 +36,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy, kivymd
+requirements = python3,kivy,kivymd,Pillow
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -135,7 +135,7 @@ android.presplash_color = #FFFFFF
 #android.whitelist =
 
 # (str) Path to a custom whitelist file
-#android.whitelist_src =
+android.whitelist_src = android_whitelist.txt
 
 # (str) Path to a custom blacklist file
 #android.blacklist_src =

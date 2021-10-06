@@ -1,7 +1,7 @@
 # build files
 venv/*
 .buildozer/*
-__pycache__/*
+*/__pycache__/*
 
 
 # IDE files

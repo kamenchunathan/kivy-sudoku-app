@@ -15,7 +15,7 @@ from kivy.uix.image import Image
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivymd.uix.textfield import MDTextField
 
-from sudoku_data import SudokuData
+from app.sudoku_data import SudokuData
 
 # images
 NUMBER_FILE_SOURCES = [

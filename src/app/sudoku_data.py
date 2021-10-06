@@ -101,3 +101,4 @@ class SudokuData:
                 if (i, j) != key and self[i, j]['value'] == value:
                     self[key[0], key[1]]['valid'] = False
                     self[key[0], key[1]]['clashing_values'].append((i, j))
+
