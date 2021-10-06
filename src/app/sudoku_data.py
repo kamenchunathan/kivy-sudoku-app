@@ -38,11 +38,13 @@ class SudokuData:
 
     def __init__(self, sudoku_size: int, file: str = '', puzzle_no: int = 0):
         if file:
-            self.__sudoku_data = load_puzzle_from_file(file, puzzle_no)
-            self.size = int(math.sqrt(len(self.__sudoku_data)))
+            Logger.info('SudokuData: Creating a sudoku puzzle from file')
+            self._sudoku_data = load_puzzle_from_file(file, puzzle_no)
+            self.size = int(math.sqrt(len(self._sudoku_data)))
         else:
+            Logger.info('SudokuData: No file found Creating a sudoku puzzle randomly.')
             self.size: int = sudoku_size
-            self.__sudoku_data = self._init_random()
+            self._sudoku_data = self._init_random()
 
     def _init_random(self):
         """Method that initializes sudoku data with random information"""
@@ -56,16 +58,20 @@ class SudokuData:
         ]
 
     def __getitem__(self, key: Tuple[int, int]):
-        return self.__sudoku_data[key[0] * self.size + key[1]]
+        return self._sudoku_data[key[0] * self.size + key[1]]
 
     def __setitem__(self, key: Tuple[int, int], val: int):
-        self.__sudoku_data[key[0] * self.size + key[1]]['value'] = val
+        self._sudoku_data[key[0] * self.size + key[1]]['value'] = val
 
     def set_value(self, key: Tuple[int, int], value: int):
+        Logger.info(f'SudokuData: {key}, {len(self._sudoku_data)}')
         if self[key[0], key[1]]['mutable']:
             self[key[0], key[1]]['value'] = value
 
         self._update_value_validity(key, value)
+
+    def __len__(self):
+        return len(self._sudoku_data)
 
     def _update_value_validity(self, key: Tuple[int, int], value: int):
         """

@@ -1,5 +1,6 @@
 import math
 from functools import partial
+import os
 from typing import Tuple
 
 from kivy import Logger
@@ -7,6 +8,7 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.graphics import Color, Line, Rectangle
 from kivy.properties import NumericProperty
+from kivy.resources import resource_find
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
@@ -88,14 +90,21 @@ class SudokuBoard(FloatLayout):
         Clock.schedule_interval(self.render, 1 / 15)
 
     def load_puzzle(self, puzzle_no: int):
+        for root, dirs, files in os.walk(os.curdir):
+            path = root.split(os.sep)
+            print((len(path) - 1) * '---', os.path.basename(root))
+            for file in files:
+                print(len(path) * '---', file)
+
         self._sudoku_data = SudokuData(
-            self.sudoku_size, SUDOKU_DATA_FILE, puzzle_no)
+            self.sudoku_size, resource_find(SUDOKU_DATA_FILE), puzzle_no)
     # ---------------------------------------- Rendering ------------------------------------
 
     def render(self, *args, **kwargs):
-        self.canvas.clear()
-        self._render_numbers()
-        self._render_overlays()
+        if len(self._sudoku_data):
+            self.canvas.clear()
+            self._render_numbers()
+            self._render_overlays()
 
     def _render_overlays(self):
         v_len = self.height / self.sudoku_size
@@ -217,6 +226,7 @@ class SudokuBoard(FloatLayout):
         self._highlighted_cell = key
 
     def set_cell_value(self, selected_value: int, dt: float):
+        Logger.info("NumberSelector: Selected value: {selected_value}, {self._highlighted_cell}")
         self._sudoku_data.set_value(self._highlighted_cell, selected_value)
 
 

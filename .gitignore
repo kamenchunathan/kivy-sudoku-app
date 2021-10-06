@@ -1,4 +1,13 @@
+# build files
 venv/*
 .buildozer/*
 __pycache__/*
+
+
+# IDE files
+.idea/
+.vscode/
+
+# design files
+design_files/
 
