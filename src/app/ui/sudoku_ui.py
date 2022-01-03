@@ -49,9 +49,7 @@ class NumberSelector(BoxLayout):
     def _post_init(self, *args):
         """Addition of widgets done in method scheduled after init to allow for loading of variables"""
         for i in range(1, self.sudoku_size + 1):
-            self.add_widget(Image(
-                source=f'res/images/{NUMBER_FILE_SOURCES[i]}'
-            ))
+            self.add_widget(Image(source=f'res/images/{NUMBER_FILE_SOURCES[i]}'))
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
