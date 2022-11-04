@@ -3,7 +3,7 @@ Main App
 """
 from kivymd.app import MDApp
 
-from ui.sudoku_ui import AppScreenManager
+from app.ui import AppScreenManager
 
 
 class SudokuApp(MDApp):

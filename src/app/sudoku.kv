@@ -1,7 +1,7 @@
-#:import SudokuScreen app.ui.sudoku_ui.SudokuScreen
-#:import LevelSelectionScreen  app.ui.sudoku_ui.LevelSelectionScreen
-#:import AppScreenManager app.ui.sudoku_ui.AppScreenManager
-#:import PuzzleNumberInput app.ui.sudoku_ui.PuzzleNumberInput
+#:import SudokuScreen app.ui.SudokuScreen
+#:import LevelSelectionScreen  app.ui.LevelSelectionScreen
+#:import AppScreenManager app.ui.AppScreenManager
+#:import PuzzleNumberInput app.ui.PuzzleNumberInput
 
 
 <NumberSelector>:
@@ -25,20 +25,20 @@
 
 
 <AppScreenManager>:
-    LevelSelectionScreen:
-        name: 'level-selection-screen'
-
-        MDLabel:
-            halign: 'center'
-            pos_hint: {'center': (0.5, 0.8)}
-            size_hint_x: 0.9
-            text: 'This is a Simple sudoku app with 10000 puzzles\n\nIt does not maintain any progress of your puzzles as of now\n\n\nTo play please enter a puzze number between 1 and 10000'
-
-        PuzzleNumberInput:
-            pos_hint: {'center': (0.5, 0.5)}
-            size_hint_x: 0.6
-            hint_text: 'sudoku number'
-            on_text_validate: self.parent.enter_level(self.text)
+#    LevelSelectionScreen:
+#        name: 'level-selection-screen'
+#
+#        MDLabel:
+#            halign: 'center'
+#            pos_hint: {'center': (0.5, 0.8)}
+#            size_hint_x: 0.9
+#            text: 'This is a Simple sudoku app with 10000 puzzles\n\nIt does not maintain any progress of your puzzles as of now\n\n\nTo play please enter a puzze number between 1 and 10000'
+#
+#        PuzzleNumberInput:
+#            pos_hint: {'center': (0.5, 0.5)}
+#            size_hint_x: 0.6
+#            hint_text: 'sudoku number'
+#            on_text_validate: self.parent.enter_level(self.text)
             
 
     SudokuScreen:
